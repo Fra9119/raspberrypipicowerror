@@ -1,0 +1,62 @@
+import network
+import socket
+import time
+import struct
+from wifi_secrets import *  # Importa le credenziali di rete dalla configurazione segreta
+from machine import Pin
+
+NTP_DELTA = 2208988800  # Costante per calcolare il tempo da NTP
+host = "pool.ntp.org"  # Server NTP da contattare
+
+led = Pin("LED", Pin.OUT)  # Definizione del pin per il LED
+
+ssid = wifi_secrets['ssid']  # SSID della rete WiFi
+psw = wifi_secrets['psw']  # Password della rete WiFi
+
+def set_time():
+    """
+    Funzione per impostare il tempo dalla rete NTP e restituirlo nel formato desiderato.
+    """
+    # Creazione del pacchetto di richiesta NTP
+    NTP_QUERY = bytearray(48)
+    NTP_QUERY[0] = 0x1B
+
+    # Ottieni l'indirizzo IP del server NTP
+    addr = socket.getaddrinfo(host, 123)[0][-1]
+
+    # Creazione di un socket UDP per comunicare con il server NTP
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # Imposta un timeout per la ricezione della risposta NTP
+        s.settimeout(1)
+
+        # Invia la richiesta NTP al server e ricevi la risposta
+        res = s.sendto(NTP_QUERY, addr)
+        msg = s.recv(48)
+    finally:
+        s.close()  # Chiudi il socket
+
+    # Estrai il valore timestamp dalla risposta NTP
+    val = struct.unpack("!I", msg[40:44])[0]
+
+    # Calcola il tempo corrente in base al timestamp NTP e alla costante delta
+    t = val - NTP_DELTA
+
+    # Aggiungi un'ora per il fuso orario di Roma
+    t += 3600
+
+    # Converte il tempo in una tupla con i componenti di data e ora
+    tm = time.localtime(t)
+
+    # Formatta il tempo nella stringa nel formato desiderato "YYYY-MM-DD HH:MM.SSSS"
+    formatted_time = "{:04d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}".format(
+        tm[0], tm[1], tm[2], tm[3], tm[4], tm[5]) 
+
+    # Restituisci il tempo formattato
+    led.on()
+    return formatted_time
+    led.off()
+
+# Esempio di utilizzo della funzione set_time() per ottenere e stampare il tempo corrente
+current_time = set_time()
+#print(current_time)
