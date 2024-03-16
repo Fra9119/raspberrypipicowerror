@@ -1,0 +1,29 @@
+from fn_post_movement import post_movement_to_main
+from fn_post_temperature import post_temperature_to_main
+from do_connect import *
+import time
+
+def main():
+    # Fai la connessione WiFi
+    do_connect()
+    # Inizializza un contatore per tener traccia del tempo
+    counter = 0
+    
+    while True:
+        # Ogni 60 secondi (1 minuto), esegui la funzione post_temperature_to_main
+        if counter % 60 == 0:
+            post_temperature_to_main()
+        
+        # Ogni 120 secondi (2 minuti), esegui la funzione post_movement_to_main
+        if counter % 120 == 0:
+            post_movement_to_main()
+        
+        # Incrementa il contatore
+        counter += 1
+        
+        # Attendi 1 secondo prima di eseguire nuovamente il ciclo
+        time.sleep(1)
+
+if __name__ == "__main__":
+    main()
+
