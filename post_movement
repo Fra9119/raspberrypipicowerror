@@ -1,0 +1,60 @@
+from do_connect import *
+from read_movement import *
+from fn_getdate import *
+import urequests
+import ujson
+import utime
+
+# Funzione per stabilire la connessione WiFi
+do_connect()
+
+file_to_open = "sensor_movement_MP-00012.json"
+with open(file_to_open, "r") as file_sensor_movement:
+    dati_sensor_movement = ujson.load(file_sensor_movement)
+
+sensor_pairing_id = dati_sensor_movement.get("sensor_pairing_id")
+
+# Funzione principale per effettuare la richiesta POST
+def post_movement_to_main():
+
+    # URL per la richiesta POST
+    url_measurereading = 'url'
+
+    # Header per la richiesta POST
+    headers_post = {
+        'Content-Type': 'Content-Type',
+        'Authorization': 'Authorization'
+    }
+
+    # Costruisci il payload JSON
+    payload = ujson.dumps(
+        {
+            "data": {
+                "type": "measurereading",
+                "attributes": {
+                    "modifyDate": current_time,
+                    "measure": read_accel_data(),
+                    "dateMeasure": current_time,
+
+                },
+                "relationships": {
+                    "sensorPairing": {
+                        "data": {
+                            "type": 'sensorpairing',
+                            "id": sensor_pairing_id
+                        }
+                    }
+                }
+            }
+        }
+    )
+
+    # Effettua la richiesta POST
+    response = urequests.post(url_measurereading, headers=headers_post, data=payload)
+
+    # Chiudi la risposta per liberare le risorse
+    response.close()
+
+# Chiamata alla funzione post_main
+post_movement_to_main()
+
